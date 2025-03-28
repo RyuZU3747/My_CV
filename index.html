@@ -1,33 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>Kim YuKyeom</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <style>
+        #pdf-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 auto;
+        }
+        canvas {
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="pdf-canvas"></canvas>
+    <div id="pdf-container"></div>
+
     <script>
         var url = './mycv.pdf';
         var pdfjsLib = window['pdfjs-dist/build/pdf'];
-
+        var pdfDoc = null;
+        
+        // PDF.js 워커 설정
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 
+        // PDF 파일 로드
         pdfjsLib.getDocument(url).promise.then(function (pdf) {
-            pdf.getPage(1).then(function (page) {
-                var scale = 1.5;
-                var viewport = page.getViewport({ scale: scale });
-
-                var canvas = document.getElementById('pdf-canvas');
-                var context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                });
-            });
+            pdfDoc = pdf;
+            var totalPages = pdf.numPages;
+            renderPages(totalPages);  // 모든 페이지 렌더링 함수 호출
         });
+
+        // 모든 페이지 렌더링 함수
+        function renderPages(totalPages) {
+            var container = document.getElementById('pdf-container');
+            
+            for (var pageNum = 1; pageNum <= totalPages; pageNum++) {
+                pdfDoc.getPage(pageNum).then(function (page) {
+                    var scale = 1.5;  // 페이지 크기 조정 (여기서 조정 가능)
+                    var viewport = page.getViewport({ scale: scale });
+
+                    var canvas = document.createElement('canvas');
+                    container.appendChild(canvas);  // 캔버스를 컨테이너에 추가
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // 페이지 렌더링
+                    page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    });
+                });
+            }
+        }
     </script>
 </body>
 </html>
